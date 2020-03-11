@@ -1,6 +1,28 @@
-FROM debian:buster-slim
-RUN apt-get update -y && apt-get install ca-certificates -y
-RUN update-ca-certificates
-ADD https://github.com/gohugoio/hugo/releases/download/v0.61.0/hugo_extended_0.61.0_Linux-64bit.deb /tmp
-RUN dpkg -i /tmp/hugo_extended_0.61.0_Linux-64bit.deb
-ENTRYPOINT hugo
+ARG BASE_IMAGE
+FROM $BASE_IMAGE
+
+ARG HUGO_VERSION
+ENV HUGO_VERSION ${HUGO_VERSION:-0.67.0}
+ENV HUGO_NAME="hugo_extended_${HUGO_VERSION}_Linux-64bit"
+ENV HUGO_BASE_URL="https://github.com/gohugoio/hugo/releases/download"
+ENV HUGO_URL="${HUGO_BASE_URL}/v${HUGO_VERSION}/${HUGO_NAME}.tar.gz"
+ENV HUGO_CHECKSUM_URL="${HUGO_BASE_URL}/v${HUGO_VERSION}/hugo_${HUGO_VERSION}_checksums.txt"
+
+WORKDIR /hugo
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+RUN apk add --no-cache --virtual .build-deps wget && \
+    apk add --no-cache \
+    git \
+    ca-certificates \
+    libc6-compat \
+    libstdc++ && \
+    wget --quiet "${HUGO_URL}" && \
+    wget --quiet "${HUGO_CHECKSUM_URL}" && \
+    grep "${HUGO_NAME}.tar.gz" "./hugo_${HUGO_VERSION}_checksums.txt" | sha256sum -c - && \
+    tar -zxvf "${HUGO_NAME}.tar.gz" && \
+    mv ./hugo /usr/bin/hugo && \
+    apk del .build-deps && \
+    rm -rf /hugo
+
+WORKDIR /src
+ENTRYPOINT [ "/usr/bin/hugo" ]
