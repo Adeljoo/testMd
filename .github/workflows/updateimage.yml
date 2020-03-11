@@ -9,7 +9,7 @@ on:
 
 env:
   DOCKER_BASE_NAME: docker.pkg.github.com/${{ github.repository }}/hugo
-  DOCKER_HUB_BASE_NAME: peaceiris/hugo
+  DOCKER_HUB_BASE_NAME: adtrust/hugo
 
 jobs:
   update:
