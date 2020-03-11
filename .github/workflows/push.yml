@@ -71,7 +71,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
         run: |
-          echo "${GITHUB_TOKEN}" | docker login docker.pkg.github.com -u adeljoo --password-stdin
+          echo "${GITHUB_TOKEN}" | docker login docker.pkg.github.com -u adtrust --password-stdin
           echo "${DOCKER_HUB_TOKEN}" | docker login -u adtrust --password-stdin
       - name: Push to GitHub Packages
         if: github.event_name != 'pull_request'
