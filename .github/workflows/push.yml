@@ -19,10 +19,10 @@ env:
 
 jobs:
   hadolint:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
-      - run: sudo install hadolint
+      - run: brew install hadolint
       - run: hadolint ./Dockerfile
 
   push:
@@ -71,8 +71,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
         run: |
-          echo "${GITHUB_TOKEN}" | docker login docker.pkg.github.com -u peaceiris --password-stdin
-          echo "${DOCKER_HUB_TOKEN}" | docker login -u peaceiris --password-stdin
+          echo "${GITHUB_TOKEN}" | docker login docker.pkg.github.com -u adeljoo --password-stdin
+          echo "${DOCKER_HUB_TOKEN}" | docker login -u adtrust --password-stdin
       - name: Push to GitHub Packages
         if: github.event_name != 'pull_request'
         run: docker push "${PKG_TAG}"
