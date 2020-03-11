@@ -1,0 +1,82 @@
+name: Docker Image Push
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths-ignore:
+      - "**.md"
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - "**.md"
+  release:
+    types: [published]
+
+env:
+  DOCKER_BASE_NAME: docker.pkg.github.com/${{ github.repository }}/hugo
+  DOCKER_HUB_BASE_NAME: adtrust/hugo
+
+jobs:
+  hadolint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: brew install hadolint
+      - run: hadolint ./Dockerfile
+
+  push:
+    runs-on: ubuntu-18.04
+    needs: hadolint
+    strategy:
+      matrix:
+        baseimage:
+          - "alpine:3.11"
+          - "golang:1.13-alpine3.11"
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "${GITHUB_CONTEXT}"
+
+      - name: Set env
+        run: |
+          if [ "${{ github.event_name }}" = 'release' ]; then
+              export TAG_NAME="${{ github.event.release.tag_name }}"
+          else
+              export TAG_NAME="latest"
+          fi
+          if [ "${{ startsWith( matrix.baseimage, 'golang') }}" = "true" ]; then
+              export TAG_NAME="${TAG_NAME}-mod"
+          fi
+          echo "::set-env name=PKG_TAG::${DOCKER_BASE_NAME}:${TAG_NAME}"
+          echo "::set-env name=HUB_TAG::${DOCKER_HUB_BASE_NAME}:${TAG_NAME}"
+      - name: Build ${{ matrix.baseimage }} base image
+        run: |
+          docker build . -t "${PKG_TAG}" --build-arg BASE_IMAGE="${{ matrix.baseimage }}"
+          docker tag "${PKG_TAG}" "${HUB_TAG}"
+      - run: docker images
+      - run: docker run --rm ${PKG_TAG} version
+
+      # - name: Scan image
+      #   run: |
+      #     docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+      #       -v ${HOME}/.cache:/root/.cache aquasec/trivy:latest --exit-code 1 ${HUB_TAG}
+
+      - name: Login to Registries
+        if: github.event_name != 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+        run: |
+          echo "${GITHUB_TOKEN}" | docker login docker.pkg.github.com -u peaceiris --password-stdin
+          echo "${DOCKER_HUB_TOKEN}" | docker login -u peaceiris --password-stdin
+      - name: Push to GitHub Packages
+        if: github.event_name != 'pull_request'
+        run: docker push "${PKG_TAG}"
+
+      - name: Push to Docker Hub
+        if: github.event_name != 'pull_request'
+        run: docker push "${HUB_TAG}"
