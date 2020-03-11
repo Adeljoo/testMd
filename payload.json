@@ -6,7 +6,7 @@
     "pull_request"
   ],
   "config": {
-    "url": "https://example.com/webhook",
+    "url": "http://e5646a5e.ngrok.io/payload",
     "content_type": "json",
     "insecure_ssl": "0"
   }
