@@ -55,8 +55,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
         run: |
-          echo "${GITHUB_TOKEN}" | docker login docker.pkg.github.com -u peaceiris --password-stdin
-          echo "${DOCKER_HUB_TOKEN}" | docker login -u peaceiris --password-stdin
+          echo "${GITHUB_TOKEN}" | docker login docker.pkg.github.com -u Adeljoo --password-stdin
+          echo "${DOCKER_HUB_TOKEN}" | docker login -u Adeljoo --password-stdin
 
       - name: Push to Docker Hub
         run: docker push "${HUB_TAG}"
